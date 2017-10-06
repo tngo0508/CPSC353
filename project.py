@@ -4,10 +4,15 @@ from __future__ import print_function
 import sys, os, argparse
 from PIL import Image
 
-def text_to_bin(text):
-    return ' '.join(format(ord(x), '08b') for x in text)
+def text_to_binary(text):
+    #  return ' '.join(format(ord(x), '08b') for x in text)
+    binary = bin(int.from_bytes(text.encode(), 'big'))
+    return binary
 
-#def numOfBit_to_bin(text_length):
+def binary_to_text(binary):
+    n = int(binary,2)
+    text = n.to_bytes((n.bit_length() + 7) // 8, 'big').decode()
+    return text
 
 def decrypt(im):
     #get horizontal and vertical size of the image
@@ -25,7 +30,7 @@ def decrypt(im):
         #each pixel has an RGB value in which has 3 sub-value r,b,g
         r, b, g = im.getpixel((x, y-1))
 
-        #each RGB has three sets of 8-bit, retrieve the last digit in each set
+        #each RGB has three sets of 8-bit, retrieve the least significant bit in each set
         temp = "{0:08b}".format(r)
         numOfBit.append(temp[-1])
         
@@ -67,10 +72,11 @@ def decrypt(im):
     print(text)
     msg = bin(int(''.join(text), 2))
     print(msg)
-    n = int(msg,2)
-    message = n.to_bytes((n.bit_length() + 7) // 8, 'big').decode()
+    #  n = int(msg,2)
+    #  message = n.to_bytes((n.bit_length() + 7) // 8, 'big').decode()
+    message = binary_to_text(msg)
     print(message)
-    return r
+    return message
 
 def main():
     im = Image.open("testImage.png")
