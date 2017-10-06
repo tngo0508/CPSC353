@@ -14,20 +14,31 @@ def decrypt(im):
     #x is vertical, y is horizontal
     x,y = im.size
 
-    #
-    y -= 1
+    #use the first 11 pixels on the bottom right to read text length(number of
+    #bits)
+    numOfBit = []
+    #textLength = int
     for i in range (0,11):
         x -= 1
-        r, b, g = im.getpixel((x, y))
+        r, b, g = im.getpixel((x, y-1))
         temp = "{0:08b}".format(r)
-        print (temp)
+        numOfBit.append(temp[-1])
+        #print (temp)
         temp = "{0:08b}".format(b)
-        print (temp)
+        numOfBit.append(temp[-1])
+        #print (temp)
         temp = "{0:08b}".format(g)
-        print (temp)
-        print (x,y)
+        numOfBit.append(temp[-1])
+        #print (temp)
+        #print (x,y)
 
-    print("{0:032b}".format(120))
+    numOfBit = numOfBit[:-1]
+    textLength = int((int(''.join(numOfBit),2)) / 8)
+    length = bin(int(''.join(numOfBit), 2))
+
+    print(numOfBit)
+    print(length)
+    print(textLength)
     return r
 
 def main():
@@ -38,9 +49,11 @@ def main():
 
     #  foo = text_to_bin("security is fun")
     #  print(foo)
+    print(len("security is fun")*8)
+    print("{0:032b}".format(120))
 
     bottom = decrypt(im)
-    print(bottom)
+    #print(bottom)
 
 if __name__ == "__main__":
     main()
