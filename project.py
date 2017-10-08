@@ -5,9 +5,7 @@ import sys, os, argparse
 from PIL import Image
 
 def text_to_binary(text):
-    #  return ' '.join(format(ord(x), '08b') for x in text)
-    binary = bin(int.from_bytes(text.encode(), 'big'))
-    return binary
+    return ' '.join(format(ord(x), '032b') for x in text)
 
 def binary_to_text(binary):
     n = int(binary,2)
@@ -52,20 +50,24 @@ def decrypt(im):
     print("The text length in bit:", bin(int(''.join(numOfBit),2))[2:].zfill(32))
 
     text = []
-    #each pixel has 3 LSB, textLength/3 will give the number of pixel
-    #containing the data
-    for i in range (0,int(textLength/3)):
+    while (len(text) < textLength):
         x -= 1
         r, b, g = im.getpixel((x, y))
 
         temp = "{0:08b}".format(r)
         text.append(temp[-1])
+        if (len(text) == textLength):
+            break
 
         temp = "{0:08b}".format(b)
         text.append(temp[-1])
-
+        if (len(text) == textLength):
+            break
+        
         temp = "{0:08b}".format(g)
         text.append(temp[-1])
+        if (len(text) == textLength):
+            break
 
         #if horizontal value becomes 0, program has reached the end of
         #bottom left. Need to reset the values of horizontal and vertical
@@ -81,18 +83,85 @@ def decrypt(im):
     message = binary_to_text(msg)
     return message
 
-def main(image):
+def change_LSB(RGBvalue, bitValue):
+    RGBvalue_sequence = list(format(RGBvalue, 'b'))
+    RGBvalue_sequence[-1] = bitValue
+    RGBvalue_sequence = ''.join(RGBvalue_sequence)
+    return RGBvalue_sequence
+
+#this function I got from author Reza Nikoopour(CSUF lecturer)
+#it is used to embed a binary in image by changing the LSB of each RGB value in each pixel
+def embed_binary_in_image(image_data, binary, index):
+    binary = list(binary)
+    new_image_data = []
+    
+    while binary:
+        red, green, blue = image_data[index]
+        index -= 1
+
+        new_red = change_LSB(red, binary[0])
+        red = int(new_red, 2)
+        binary.pop(0)
+        if not binary:
+            new_image_data.append((red, green, blue))
+            break
+        new_green = change_LSB(green, binary[0])
+        green = int(new_green, 2)
+        binary.pop(0)
+        if not binary:
+            new_image_data.append((red, green, blue))
+            break
+        new_blue = change_LSB(blue, binary[0])
+        blue = int(new_blue, 2)
+        binary.pop(0)
+        new_image_data.append((red, green, blue))
+    return (new_image_data, index)
+
+#modify embed_in_image function from  author Reza Nikoopour(CSUF lecturer)
+def encrypt(im, text):
+    #data stores pixel values in a list. Each element is a group of 3-RGB value
+    data = list(im.getdata())
+
+    #get the length of secret text and convert it into numOfBit, then convert
+    #that number into binary sequence
+    textLength = len(text)
+    numOfBit = textLength * 8
+    numOfBit = format(numOfBit, '032b')
+    
+    newData = []
+    (modifiedData, index) = embed_binary_in_image(data, numOfBit, -1)
+    newData += modifiedData
+
+    text_in_binary = text_to_binary(text)
+    (modifiedData, last_pixel) = embed_binary_in_image(data, text_in_binary, -11)
+    newData += modifiedData
+    newData = data[last_pixel:] + newData
+
+    im.putdata(newData)
+    im.save(output_file, 'PNG')
+    
+def main(image,text, isEncrypt, output):
     im = Image.open(image)
-    print(decrypt(im))
+    if isEncrypt:
+        new_image = encrypt(im, text)
+    else:
+        print(decrypt(im))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description = 'stegenography project CPSC353')
 
-    #make sure that only one of the arguments in the mutually exclusive group was present on the command line
-    #a required argument, to indicate that at least one of the mutually exclusive arguments is required
     group = parser.add_mutually_exclusive_group(required = True)
-    group.add_argument("--decrypt", "-d", help = "decryption on an image mode RGB", action = 'store_true', dest = "decryptedImage")
+    group.add_argument("--decrypt", "-d", help = "decryption on an image mode RGB", action = 'store_true', dest = "decryptedImage", default = False)
+    group.add_argument("--encrypt", "-e", help = "encryption on an image mode RGB", action = 'store_true', dest = "encryption", default = False)
     parser.add_argument("image", help = "location of the image")
+    parser.add_argument("--text", "-t", help = "secret text")
+    parser.add_argument("--output", "-o", help = "Name of output file", dest =
+    "output",default = None)
     args = parser.parse_args()
 
-    main(args.image)
+    if args.encryption and not args.text and not args.output:
+        print("secret text is required")
+        sys.exit(0)
+
+    main(args.image, args.output, args.text, args.encryption)
+
