@@ -88,7 +88,7 @@ def decrypt(im):
 #these functions are modified to hide the image from bottom right to top left
 #all of original codes and credits are belong to Reza Nikoopour (CalState Fullerton Lecturer)
 #source code is found here, https://github.com/rnikoopour/TextInImage
-def change_last_bit(byte, bit_val):
+def change_last_bit(byte, bit_val): #used to change the least significant bit (LSB)
     rep_as_bit = list(format(byte, 'b'))
     rep_as_bit[-1] = bit_val
     rep_as_bit = ''.join(rep_as_bit)
@@ -98,9 +98,11 @@ def embed_binary_in_image(image_data, binary, index):
     binary = list(binary)
     new_image_data = []
     
+    #used
     while binary:
         red, green, blue = image_data[index]
-        index -= 1
+        index -= 1  #used for reading backward from bottom right to left
+                    #if want to read from top left to bottom right, change to index += 1
 
         new_red = change_last_bit(red, binary[0])
         red = int(new_red, 2)
@@ -128,12 +130,18 @@ def embed_in_image(im, text):
     text_as_binary = text_to_binary(text)
 
     new_image_data = []
+    #-1 is last pixel of the image
     (transformed_image_data, index) = embed_binary_in_image(image_data, textLength_in_binary, -1) 
-    new_image_data += transformed_image_data
+    new_image_data += transformed_image_data 
 
+    #-12 is the start position of secret text (start pixel of text)
     (transformed_image_data, last_pixel_written) = embed_binary_in_image(image_data, text_as_binary, -12) 
+
+    #correct concetenation of lists is required in order to encrypt secret text
+    #in desired order. In this case, text length in binary is on the right most (bottom right)
+    #next left is the sequence binary of encrypted text
     new_image_data = transformed_image_data + new_image_data
-    new_image_data = image_data[:last_pixel_written+1] + new_image_data
+    new_image_data = image_data[:last_pixel_written+1] + new_image_data 
     
     return new_image_data
 
