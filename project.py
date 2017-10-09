@@ -2,6 +2,7 @@
 
 from __future__ import print_function
 import sys, os, argparse
+import pdb
 from PIL import Image
 
 def text_to_binary(text):
@@ -83,13 +84,16 @@ def decrypt(im):
     message = binary_to_text(msg)
     return message
 
+#encryption include function change_last_bit, embed_binary_in_image, and embed_in_image
+#These functions are modified based on https://github.com/rnikoopour/TextInImage
+#All credits of function belongs to Reza Nikoopour (CSUF lecturer)
 def change_last_bit(byte, bit_val):
     rep_as_bit = list(format(byte, 'b'))
     rep_as_bit[-1] = bit_val
     rep_as_bit = ''.join(rep_as_bit)
     return rep_as_bit
 
-def embed_binary_in_image(image_data, binary, index=0):
+def embed_binary_in_image(image_data, binary, index):
     binary = list(binary)
     new_image_data = []
     
@@ -102,31 +106,41 @@ def embed_binary_in_image(image_data, binary, index=0):
         binary.pop(0)
         if not binary:
             new_image_data.append((red, green, blue))
+            #  new_image_data.insert(0,(red, green, blue))
             break
         new_green = change_last_bit(green, binary[0])
         green = int(new_green, 2)
         binary.pop(0)
         if not binary:
             new_image_data.append((red, green, blue))
+            #  new_image_data.insert(0,(red, green, blue))
             break
         new_blue = change_last_bit(blue, binary[0])
         blue = int(new_blue, 2)
         binary.pop(0)
         new_image_data.append((red, green, blue))
+        #  new_image_data.insert(0,(red, green, blue))
+
+    new_image_data.reverse()
     return (new_image_data, index)
 
 def embed_in_image(im, text):
     image_data = list(im.getdata())
+    print(len(image_data))
     textLength_in_binary = format(len(text) * 8, '032b') 
     text_as_binary = text_to_binary(text)
 
     new_image_data = []
     (transformed_image_data, index) = embed_binary_in_image(image_data, textLength_in_binary, -1) 
     new_image_data += transformed_image_data
+    print(textLength_in_binary)
 
     (transformed_image_data, last_pixel_written) = embed_binary_in_image(image_data, text_as_binary, -12) 
+    print(text_as_binary)
     new_image_data = transformed_image_data + new_image_data
-    new_image_data = image_data[:last_pixel_written] + new_image_data
+    new_image_data = image_data[:last_pixel_written+1] + new_image_data
+    
+    print(len(new_image_data))
     return new_image_data
 
 def main(image, output, text, isEncrypt):
