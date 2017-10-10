@@ -13,7 +13,7 @@ def binary_to_text(binary):
     text = n.to_bytes((n.bit_length() + 7) // 8, 'big').decode()
     return text
 
-def decrypt(im):
+def decode(im):
     #get horizontal and vertical size of the image
     #x is horizontal, y is vertical
     x,y = im.size
@@ -22,7 +22,7 @@ def decrypt(im):
     #bits)
     numOfBit = [] #store text length in binary
     y -=1
-    for i in range (0,11):
+    for i in range (11):
         #decrement x to read backward from bottome right to bottom left of image
         x -= 1
 
@@ -84,90 +84,24 @@ def decrypt(im):
     message = binary_to_text(msg)
     return message
 
-#encryption include function change_last_bit, embed_binary_in_image, embed_in_image
-#these functions are modified to hide the image from bottom right to top left
-#all of original codes and credits are belong to Reza Nikoopour (CalState Fullerton Lecturer)
-#source code is found here, https://github.com/rnikoopour/TextInImage
-def change_last_bit(byte, bit_val): #used to change the least significant bit (LSB)
-    rep_as_bit = list(format(byte, 'b'))
-    rep_as_bit[-1] = bit_val
-    rep_as_bit = ''.join(rep_as_bit)
-    return rep_as_bit
-
-def embed_binary_in_image(image_data, binary, index):
-    binary = list(binary)
-    new_image_data = []
-    
-    #used
-    while binary:
-        red, green, blue = image_data[index]
-        index -= 1  #used for reading backward from bottom right to left
-                    #if want to read from top left to bottom right, change to index += 1
-
-        new_red = change_last_bit(red, binary[0])
-        red = int(new_red, 2)
-        binary.pop(0)
-        if not binary:
-            new_image_data.append((red, green, blue))
-            break
-        new_green = change_last_bit(green, binary[0])
-        green = int(new_green, 2)
-        binary.pop(0)
-        if not binary:
-            new_image_data.append((red, green, blue))
-            break
-        new_blue = change_last_bit(blue, binary[0])
-        blue = int(new_blue, 2)
-        binary.pop(0)
-        new_image_data.append((red, green, blue))
-
-    new_image_data.reverse()
-    return (new_image_data, index)
-
-def embed_in_image(im, text):
-    image_data = list(im.getdata())
-    textLength_in_binary = format(len(text) * 8, '032b') 
-    text_as_binary = text_to_binary(text)
-
-    new_image_data = []
-    #-1 is last pixel of the image
-    (transformed_image_data, index) = embed_binary_in_image(image_data, textLength_in_binary, -1) 
-    new_image_data += transformed_image_data 
-
-    #-12 is the start position of secret text (start pixel of text)
-    (transformed_image_data, last_pixel_written) = embed_binary_in_image(image_data, text_as_binary, -12) 
-
-    #correct concetenation of lists is required in order to encrypt secret text
-    #in desired order. In this case, text length in binary is on the right most (bottom right)
-    #next left is the sequence binary of encrypted text
-    new_image_data = transformed_image_data + new_image_data
-    new_image_data = image_data[:last_pixel_written+1] + new_image_data 
-    
-    return new_image_data
-
-def main(image, output, text, isEncrypt):
+def main(image, output, text, isEncode):
     im = Image.open(image)
-    if isEncrypt:
-        new_image = embed_in_image(im, text)
-        im.putdata(new_image)
-        im.save(output, 'PNG')
-    else:
-        print(decrypt(im))
+    print(decode(im))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description = 'stegenography project CPSC353')
 
     group = parser.add_mutually_exclusive_group(required = True)
-    group.add_argument("--decrypt", "-d", help = "decryption on an image mode RGB", action = 'store_true', dest = "decryptedImage", default = False)
-    group.add_argument("--encrypt", "-e", help = "encryption on an image mode RGB", action = 'store_true', dest = "encryption", default = False)
+    group.add_argument("--decode", "-d", help = "decode on an image mode RGB", action = 'store_true', dest = "decode", default = False)
+    group.add_argument("--encode", "-e", help = "encode on an image mode RGB", action = 'store_true', dest = "encode", default = False)
     parser.add_argument("image", help = "location of the image")
-    parser.add_argument("--text", "-t", help = "secret text")
+    parser.add_argument("--text", "-t", action='store',help = "secret text")
     parser.add_argument("--output", "-o", help = "Name of output file", dest = "output",default = None)
     args = parser.parse_args()
 
-    if args.encryption and not args.text and not args.output:
+    if args.encode and not args.text and not args.output:
         print("secret text is required")
         sys.exit(0)
 
-    main(args.image, args.output, args.text, args.encryption)
+    main(args.image, args.output, args.text, args.encode)
 
