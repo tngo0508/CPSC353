@@ -1,6 +1,6 @@
 # CPSC353
 # Project 1
-- Author: Thomas Ngo, Reza Nikopoour
+- Author: Thomas Ngo
 
 # Project Description
 - underconstruction...
