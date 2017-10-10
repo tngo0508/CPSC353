@@ -50,6 +50,8 @@ def decode(im):
     print("The text length in bit:", textLength)
     print("The text length in binary:", bin(int(''.join(numOfBit),2))[2:].zfill(32))
 
+    #knew the length of secret text, use it to find the sequence binary of the secret text
+    #after that, use the function binary_to_text to decode it into message
     text = []
     while (len(text) < textLength):
         x -= 1
