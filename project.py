@@ -17,6 +17,7 @@ def decode(im):
     #get horizontal and vertical size of the image
     #x is horizontal, y is vertical
     x,y = im.size
+    w,l = im.size #used to reset x and y
     
     #use the first 11 pixels on the bottom right to read text length(number of
     #bits)
@@ -77,7 +78,7 @@ def decode(im):
         #to read the line above the current line and from right to left
         if (x == 0):
             y -= 1
-            x -= 1
+            x = w - 1
         
     #convert sequence of LSB into a real binary
     msg = bin(int(''.join(text), 2))
@@ -101,34 +102,36 @@ def encode(im, text):
     textLength = len(text_in_binary)
     
     #hide textLength as binary inside 11 pixels of the image
-    textLength = format(textLength, '032b')
-    print(textLength)
+    textLength_as_binary = format(textLength, '032b')
 
     pixels = im.load() #create a pixel map
     x,y = im.size
+    w,l = im.size #used to reset x and y
+    index = 0 
     y -=1
-    while textLength:
+    while textLength_as_binary:
         x -= 1
 
         r, b, g = im.getpixel((x, y))
+        index -= 1 #keep track the pixel position 
         
-        if textLength:
-            r = change_LSB(r, textLength)
-            textLength = textLength[1:]
+        if textLength_as_binary:
+            r = change_LSB(r, textLength_as_binary)
+            textLength_as_binary = textLength_as_binary[1:]
              
-            if not textLength:
+            if not textLength_as_binary:
                 newImageData.append((r, b, g))
                 break
             
-            b = change_LSB(b, textLength)
-            textLength = textLength[1:]
-            if not textLength:
+            b = change_LSB(b, textLength_as_binary)
+            textLength_as_binary = textLength_as_binary[1:]
+            if not textLength_as_binary:
                 newImageData.append((r, b, g))
                 break
 
-            g = change_LSB(g, textLength)
-            textLength = textLength[1:]
-            if not textLength:
+            g = change_LSB(g, textLength_as_binary)
+            textLength_as_binary = textLength_as_binary[1:]
+            if not textLength_as_binary:
                 newImageData.append((r, b, g))
                 break
 
@@ -136,38 +139,57 @@ def encode(im, text):
     
     print(newImageData)
 
-    numOfBit = []
-    #testing
-    for i in range(10, 0, -1):
-        #  print(i)
-        #decrement x to read backward from bottome right to bottom left of image
+    #hide secret text as binary after the pixel 11 from bottom right to top left
+    while text_in_binary:
+        x -= 1
 
-        #each pixel has an RGB value in which has 3 sub-value r,b,g
-        r, b, g = newImageData[-i]
-        print(newImageData[-i])
+        r, b, g = im.getpixel((x, y))
+        index -= 1 #keep track the pixel position
 
-        #each RGB has three sets of 8-bit, retrieve the least significant
-        #bit(LSB) in each set and add them in numOfBit to establish a sequence of binary
-        temp = "{0:08b}".format(r)
-        numOfBit.append(temp[-1])
-        
-        temp = "{0:08b}".format(b)
-        numOfBit.append(temp[-1])
+        if text_in_binary:
+            r = change_LSB(r, text_in_binary)
+            text_in_binary = text_in_binary[1:]
 
-        temp = "{0:08b}".format(g)
-        numOfBit.append(temp[-1])
+            if not text_in_binary:
+                newImageData.append((r, b, g))
+                break
 
-    #11 pixels store 33 LSB, but only 32 LSB are used to read the text length
-    numOfBit = numOfBit[:-1]
+            b = change_LSB(b, text_in_binary)
+            text_in_binary = text_in_binary[1:]
+            if not text_in_binary:
+                newImageData.append((r, b, g))
+                break
+
+            g = change_LSB(g, text_in_binary)
+            text_in_binary = text_in_binary[1:]
+            if not textLength:
+                newImageData.append((r, b, g))
+                break
+
+        newImageData.append((r, b, g))
+
+        if x == 0:
+            y -= 1
+            x -= w - 1
+
+    #reverse the list in order to decode in correct order
+    newImageData = newImageData[::-1]
+    print(newImageData)
+    #copy the rest pixels of the image into newImageData
+    print(len(imageData))
+    newImageData = imageData[:index] + newImageData
+    print(len(newImageData))
+
+    return newImageData
+
     
-    print("The text length in binary:", bin(int(''.join(numOfBit),2))[2:].zfill(32))
-
-    
-#  def main(image, output, text, isEncode):
-def main(image, text, isEncode):
+def main(image, output, text, isEncode):
+#  def main(image, text, isEncode):
     im = Image.open(image)
     if isEncode:
-        encode(im, text)
+        newImage = encode(im, text)
+        im.putdata(newImage)
+        im.save(output, "PNG")
     else:
         print(decode(im))
 
@@ -179,14 +201,14 @@ if __name__ == "__main__":
     group.add_argument("--encode", "-e", help = "encode on an image mode RGB", action = 'store_true', dest = "encode", default = False)
     parser.add_argument("image", help = "location of the image")
     parser.add_argument("--text", "-t", action='store',help = "secret text")
-    #  parser.add_argument("--output", "-o", help = "Name of output file", dest = "output",default = None)
+    parser.add_argument("--output", "-o", help = "Name of output file", dest = "output",default = None)
     args = parser.parse_args()
 
     if args.encode and not args.text and not args.output:
         print("secret text is required")
         sys.exit(0)
 
-    #  main(args.image, args.output, args.text, args.encode)
-    main(args.image, args.text, args.encode)
+    main(args.image, args.output, args.text, args.encode)
+    #  main(args.image, args.text, args.encode)
     
 
