@@ -86,9 +86,90 @@ def decode(im):
     message = binary_to_text(msg)
     return message
 
-def main(image, output, text, isEncode):
+def change_LSB(RGB_elem, binary):
+    temp = list('{0:08b}'.format(RGB_elem))
+    binary = list(binary)
+    temp[-1] = binary[0]
+    temp  = ''.join(temp)
+    RGB_elem = int(temp,2) 
+    return RGB_elem
+
+def encode(im, text):
+    imageData = list(im.getdata())
+    newImageData = []
+    text_in_binary = text_to_binary(text) 
+    textLength = len(text_in_binary)
+    
+    #hide textLength as binary inside 11 pixels of the image
+    textLength = format(textLength, '032b')
+    print(textLength)
+
+    pixels = im.load() #create a pixel map
+    x,y = im.size
+    y -=1
+    while textLength:
+        x -= 1
+
+        r, b, g = im.getpixel((x, y))
+        
+        if textLength:
+            r = change_LSB(r, textLength)
+            textLength = textLength[1:]
+             
+            if not textLength:
+                newImageData.append((r, b, g))
+                break
+            
+            b = change_LSB(b, textLength)
+            textLength = textLength[1:]
+            if not textLength:
+                newImageData.append((r, b, g))
+                break
+
+            g = change_LSB(g, textLength)
+            textLength = textLength[1:]
+            if not textLength:
+                newImageData.append((r, b, g))
+                break
+
+        newImageData.append((r, b, g))
+    
+    print(newImageData)
+
+    numOfBit = []
+    #testing
+    for i in range(10, 0, -1):
+        #  print(i)
+        #decrement x to read backward from bottome right to bottom left of image
+
+        #each pixel has an RGB value in which has 3 sub-value r,b,g
+        r, b, g = newImageData[-i]
+        print(newImageData[-i])
+
+        #each RGB has three sets of 8-bit, retrieve the least significant
+        #bit(LSB) in each set and add them in numOfBit to establish a sequence of binary
+        temp = "{0:08b}".format(r)
+        numOfBit.append(temp[-1])
+        
+        temp = "{0:08b}".format(b)
+        numOfBit.append(temp[-1])
+
+        temp = "{0:08b}".format(g)
+        numOfBit.append(temp[-1])
+
+    #11 pixels store 33 LSB, but only 32 LSB are used to read the text length
+    numOfBit = numOfBit[:-1]
+    
+    print("The text length in binary:", bin(int(''.join(numOfBit),2))[2:].zfill(32))
+
+    
+#  def main(image, output, text, isEncode):
+def main(image, text, isEncode):
     im = Image.open(image)
-    print(decode(im))
+    if isEncode:
+        encode(im, text)
+    else:
+        print(decode(im))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description = 'stegenography project CPSC353')
@@ -98,12 +179,14 @@ if __name__ == "__main__":
     group.add_argument("--encode", "-e", help = "encode on an image mode RGB", action = 'store_true', dest = "encode", default = False)
     parser.add_argument("image", help = "location of the image")
     parser.add_argument("--text", "-t", action='store',help = "secret text")
-    parser.add_argument("--output", "-o", help = "Name of output file", dest = "output",default = None)
+    #  parser.add_argument("--output", "-o", help = "Name of output file", dest = "output",default = None)
     args = parser.parse_args()
 
     if args.encode and not args.text and not args.output:
         print("secret text is required")
         sys.exit(0)
 
-    main(args.image, args.output, args.text, args.encode)
+    #  main(args.image, args.output, args.text, args.encode)
+    main(args.image, args.text, args.encode)
+    
 
