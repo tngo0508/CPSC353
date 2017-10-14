@@ -5,6 +5,10 @@
 # Project Description
 - underconstruction...
 # How to execute
-- To encrypt
+- To encode:
+$ ./project -e <image> -t <text> -o <output>.png
+
+- To decode:
+$ ./project -d <image>.png
 working on it...
 ```
