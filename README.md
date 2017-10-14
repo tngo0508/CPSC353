@@ -7,11 +7,11 @@
 # How to execute
 - To encode:
 ```
-$ ./project -e <image> -t <text> -o <output>.png
+$ ./project.py -e <image> -t <text> -o <output>.png
 ```
 
 - To decode:
 ```
-$ ./project -d <image>.png
+$ ./project.py -d <image>.png
 ```
 working on it...
