@@ -1,8 +1,7 @@
 #!/usr/bin/python3
 
 from __future__ import print_function
-import sys, os, argparse
-import pdb
+import sys, os, argparse, io
 from PIL import Image
 
 def text_to_binary(text):
@@ -49,7 +48,7 @@ def decode(im):
     #sequence, it is NOT a real binary
     textLength = int(''.join(numOfBit),2)
     print("The text length in bit:", textLength)
-    print("The text length in binary:", bin(int(''.join(numOfBit),2))[2:].zfill(32))
+    #  print("The text length in binary:", bin(int(''.join(numOfBit),2))[2:].zfill(32))
 
     #knew the length of secret text, use it to find the sequence binary of the secret text
     #after that, use the function binary_to_text to decode it into message
@@ -57,6 +56,7 @@ def decode(im):
     while (len(text) < textLength):
         x -= 1
         r, b, g = im.getpixel((x, y))
+        print(x,y)
 
         temp = "{0:08b}".format(r)
         text.append(temp[-1])
@@ -77,13 +77,12 @@ def decode(im):
         #bottom left. Need to reset the values of horizontal and vertical
         #to read the line above the current line and from right to left
         if (x == 0):
-            y -= 1
-            x = w - 1
+            y = y - 1
+            x = w
         
     #convert sequence of LSB into a real binary
     msg = bin(int(''.join(text), 2))
-    print("The binary sequence of secret text:",
-            bin(int(''.join(text),2))[2:].zfill(32)) 
+    #  print("The binary sequence of secret text:", bin(int(''.join(text),2))[2:].zfill(32)) 
     message = binary_to_text(msg)
     return message
 
@@ -97,12 +96,14 @@ def change_LSB(RGB_elem, binary):
 
 def encode(im, text):
     imageData = list(im.getdata())
+    print(len(imageData))
     newImageData = []
     text_in_binary = text_to_binary(text) 
     textLength = len(text_in_binary)
     
     #hide textLength as binary inside 11 pixels of the image
     textLength_as_binary = format(textLength, '032b')
+    print(textLength_as_binary)
 
     pixels = im.load() #create a pixel map
     x,y = im.size
@@ -137,8 +138,6 @@ def encode(im, text):
 
         newImageData.append((r, b, g))
     
-    print(newImageData)
-
     #hide secret text as binary after the pixel 11 from bottom right to top left
     while text_in_binary:
         x -= 1
@@ -169,25 +168,28 @@ def encode(im, text):
         newImageData.append((r, b, g))
 
         if x == 0:
-            y -= 1
-            x -= w - 1
+            y = y - 1
+            x = w - 1
 
     #reverse the list in order to decode in correct order
     newImageData = newImageData[::-1]
-    print(newImageData)
-    #copy the rest pixels of the image into newImageData
-    print(len(imageData))
-    newImageData = imageData[:index] + newImageData
-    print(len(newImageData))
 
+    #copy the rest pixels of the image into newImageData
+    newImageData = imageData[:index] + newImageData
+
+    print(len(newImageData))
     return newImageData
 
     
-def main(image, output, text, isEncode):
+def main(image, output, read, isEncode):
+#  def main(image, output, text, isEncode):
 #  def main(image, text, isEncode):
     im = Image.open(image)
     if isEncode:
-        newImage = encode(im, text)
+        #  newImage = encode(im, text)
+        with open(read, encoding = 'ascii') as content_file:
+            content = content_file.read()
+        newImage = encode(im, content)
         im.putdata(newImage)
         im.save(output, "PNG")
     else:
@@ -200,15 +202,18 @@ if __name__ == "__main__":
     group.add_argument("--decode", "-d", help = "decode on an image mode RGB", action = 'store_true', dest = "decode", default = False)
     group.add_argument("--encode", "-e", help = "encode on an image mode RGB", action = 'store_true', dest = "encode", default = False)
     parser.add_argument("image", help = "location of the image")
-    parser.add_argument("--text", "-t", action='store',help = "secret text")
+    #  parser.add_argument("--text", "-t", action='store',help = "secret text")
+    parser.add_argument("--read", "-r", action='store',help = "read file")
     parser.add_argument("--output", "-o", help = "Name of output file", dest = "output",default = None)
     args = parser.parse_args()
 
-    if args.encode and not args.text and not args.output:
+    #  if args.encode and not args.text and not args.output:
+    if args.encode and not args.read and not args.output:
         print("secret text is required")
         sys.exit(0)
 
-    main(args.image, args.output, args.text, args.encode)
+    main(args.image, args.output, args.read, args.encode)
+    #  main(args.image, args.output, args.text, args.encode)
     #  main(args.image, args.text, args.encode)
     
 
