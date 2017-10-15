@@ -10,7 +10,7 @@ Make sure you change user permission to execute the program
 ```
 $ chmod u+x project.py
 ```
-- To encode:
+### To encode:
 ```
 $ ./project.py -e <image> -r <file>.txt -o <output>.png
 ```
@@ -18,7 +18,7 @@ or
 ```
 $ python3 project.py -e <image> -r <file>.txt -o <output>.png
 ```
-- To decode:
+### To decode:
 ```
 $ ./project.py -d <image>.png
 ```
