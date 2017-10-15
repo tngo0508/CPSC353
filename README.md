@@ -3,7 +3,9 @@
 Author: Thomas Ngo
 
 ## Project Description
-The design of this program is divided into two main parts that are encode and decode. Following these main functions, there are also 3 helper functions that do the change of the last significant bit(LSB), conversion between text and binary and vice versa. The programming language used is python3. 
+
+The design of this program is divided into two main parts that are encode and decode. Following these main functions, there are also 3 helper functions that do the change of the last significant bit(LSB), conversion between text and binary and vice versa. The scripting language is python3. 
+
 ## How to execute
 
 Make sure you change user permission to execute the program
