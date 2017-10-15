@@ -253,11 +253,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description = 'Stegenography Project CPSC353')
 
     group = parser.add_mutually_exclusive_group(required = True)
-    group.add_argument('--decode', '-d', help = 'decode on an image mode RGB', action = 'store_true', dest = 'decode', default = False)
-    group.add_argument('--encode', '-e', help = 'encode on an image mode RGB', action = 'store_true', dest = 'encode', default = False)
+    group.add_argument('-d','--decode', help = 'decode on an image mode RGB', action = 'store_true', dest = 'decode', default = False)
+    group.add_argument('-e', '--encode', help = 'encode on an image mode RGB', action = 'store_true', dest = 'encode', default = False)
     parser.add_argument('image', help = 'location of the image')
-    parser.add_argument('--read', '-r', action='store',help = 'human-readable file')
-    parser.add_argument('--output', '-o', help = 'Name of output file', dest = 'output',default = None)
+    parser.add_argument('-r', '--read', action='store',help = 'human-readable file')
+    parser.add_argument('-o', '--output', help = 'Name of output file', dest = 'output',default = None)
     args = parser.parse_args()
 
     if args.encode and not args.read and not args.output:
