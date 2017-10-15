@@ -1,7 +1,7 @@
 # CPSC353
 ## Project 1 Text In Image
-Author: Thomas Ngo
-Instructor: Reza Nikoopour
+Author: Thomas Ngo <br /> 
+Instructor: Reza Nikoopour <br /> 
 California University State, Fullerton
 
 ## Project Description
