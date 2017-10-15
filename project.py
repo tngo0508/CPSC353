@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
-from __future__ import print_function
 import sys, os, argparse, io
+from __future__ import print_function
 from PIL import Image
 
 def text_to_binary(text):
@@ -17,7 +17,7 @@ def decode(im):
     #x is horizontal, y is vertical
     x,y = im.size
     w,l = im.size #used to reset x and y
-    
+
     #use the first 11 pixels on the bottom right to read text length(number of
     #bits)
     numOfBit = [] #store text length in binary
@@ -33,7 +33,7 @@ def decode(im):
         #bit(LSB) in each set and add them in numOfBit to establish a sequence of binary
         temp = "{0:08b}".format(r)
         numOfBit.append(temp[-1])
-        
+
         temp = "{0:08b}".format(b)
         numOfBit.append(temp[-1])
 
@@ -56,7 +56,6 @@ def decode(im):
     while (len(text) < textLength):
         x -= 1
         r, b, g = im.getpixel((x, y))
-        print(x,y)
 
         temp = "{0:08b}".format(r)
         text.append(temp[-1])
@@ -67,7 +66,7 @@ def decode(im):
         text.append(temp[-1])
         if (len(text) == textLength):
             break
-        
+
         temp = "{0:08b}".format(g)
         text.append(temp[-1])
         if (len(text) == textLength):
@@ -79,7 +78,7 @@ def decode(im):
         if (x == 0):
             y = y - 1
             x = w
-        
+
     #convert sequence of LSB into a real binary
     msg = bin(int(''.join(text), 2))
     #  print("The binary sequence of secret text:", bin(int(''.join(text),2))[2:].zfill(32)) 
@@ -96,14 +95,12 @@ def change_LSB(RGB_elem, binary):
 
 def encode(im, text):
     imageData = list(im.getdata())
-    print(len(imageData))
     newImageData = []
     text_in_binary = text_to_binary(text) 
     textLength = len(text_in_binary)
-    
+
     #hide textLength as binary inside 11 pixels of the image
     textLength_as_binary = format(textLength, '032b')
-    print(textLength_as_binary)
 
     pixels = im.load() #create a pixel map
     x,y = im.size
@@ -115,15 +112,15 @@ def encode(im, text):
 
         r, b, g = im.getpixel((x, y))
         index -= 1 #keep track the pixel position 
-        
+
         if textLength_as_binary:
             r = change_LSB(r, textLength_as_binary)
             textLength_as_binary = textLength_as_binary[1:]
-             
+
             if not textLength_as_binary:
                 newImageData.append((r, b, g))
                 break
-            
+
             b = change_LSB(b, textLength_as_binary)
             textLength_as_binary = textLength_as_binary[1:]
             if not textLength_as_binary:
@@ -137,7 +134,7 @@ def encode(im, text):
                 break
 
         newImageData.append((r, b, g))
-    
+
     #hide secret text as binary after the pixel 11 from bottom right to top left
     while text_in_binary:
         x -= 1
@@ -169,7 +166,7 @@ def encode(im, text):
 
         if x == 0:
             y = y - 1
-            x = w - 1
+            x = w
 
     #reverse the list in order to decode in correct order
     newImageData = newImageData[::-1]
@@ -177,12 +174,11 @@ def encode(im, text):
     #copy the rest pixels of the image into newImageData
     newImageData = imageData[:index] + newImageData
 
-    print(len(newImageData))
     return newImageData
 
-    
+
 def main(image, output, read, isEncode):
-#  def main(image, output, text, isEncode):
+    #  def main(image, output, text, isEncode):
 #  def main(image, text, isEncode):
     im = Image.open(image)
     if isEncode:
@@ -215,5 +211,5 @@ if __name__ == "__main__":
     main(args.image, args.output, args.read, args.encode)
     #  main(args.image, args.output, args.text, args.encode)
     #  main(args.image, args.text, args.encode)
-    
+
 
