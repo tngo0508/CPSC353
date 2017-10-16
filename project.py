@@ -161,7 +161,6 @@ def encode(im, text):
     """Hide textLength as binary inside 11 pixels of the image"""
     text_length_as_binary = format(text_length, '032b')
 
-    pixels = im.load() #create a pixel map
     x,y = im.size
     w,l = im.size #used to reset x and y
     index = 0 
