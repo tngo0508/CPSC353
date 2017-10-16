@@ -28,7 +28,7 @@ $ ./project.py -d <image>.png
 ```
 or
 ```
-$ python3 project.py -d <image> 
+$ python3 project.py -d <image>.png 
 ```
 ### Summary of the usage
 ```
