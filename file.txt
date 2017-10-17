@@ -19,6 +19,7 @@ def text_to_binary(text):
 
     return ''.join(format(ord(x), '08b') for x in text)
 
+
 def binary_to_text(binary):
     """Convert a sequence of binary back to text. First, change binary to an
     integer. Then, use to_bytes() and decode() to change data again into bytes
@@ -34,6 +35,7 @@ def binary_to_text(binary):
     n = int(binary,2)
     text = n.to_bytes((n.bit_length() + 7) // 8, 'big').decode()
     return text
+
 
 def decode(im):
     """Decode the hidden secret text inside an image
@@ -120,6 +122,7 @@ def decode(im):
     message = binary_to_text(msg)
     return message
 
+
 def change_LSB(RGB_elem, binary):
     """Change the least significant bit in red, blue, green value or RGB value
     of a pixel
@@ -139,6 +142,7 @@ def change_LSB(RGB_elem, binary):
     temp  = ''.join(temp)
     RGB_elem = int(temp,2) 
     return RGB_elem
+
 
 def encode(im, text):
     """Encode or hide the data (e.g. secret text) inside the least significant
@@ -246,6 +250,7 @@ def main(image, output, read, is_encode):
         im.save(output, 'PNG')
     else:
         print(decode(im))
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description = 'Stegenography Project CPSC353')
