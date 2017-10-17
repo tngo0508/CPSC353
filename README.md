@@ -1,6 +1,6 @@
 # CPSC353
 ## Project 1 Text In Image
-Author: Thomas Ngo <br /> 
+Author: Thomas Ngo <br />
 Instructor: Reza Nikoopour <br /> 
 California University State, Fullerton
 
@@ -28,7 +28,7 @@ $ ./project.py -d <image>.png
 ```
 or
 ```
-$ python3 project.py -d <image> 
+$ python3 project.py -d <image>.png 
 ```
 ### Summary of the usage
 ```
