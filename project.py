@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-from __future__ import print_function
-from PIL import Image
 import sys
 import os
 import argparse
+from PIL import Image
 
 def text_to_binary(text):
     """Convert a string text into sequence of binary by using ASCII key number.
