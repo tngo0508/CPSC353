@@ -126,15 +126,15 @@ def decode(img):
 
 def change_least_significant_bit(color_value, binary):
     """Change the least significant bit in red, blue, green value or RGB value
-    of a pixel
+    of a pixel.
 
     Args:
-        color_value: red, green, or blue value of a pixel
+        color_value: red, green, or blue value of a pixel.
         binary: sequence of number 0 and 1 representing for textLength or secret
-        text
+        text.
 
     Returns:
-        New RGB value after changing the least significant bit
+        New RGB value after changing the least significant bit.
     """
 
     temp = list('{0:08b}'.format(color_value))
@@ -143,6 +143,22 @@ def change_least_significant_bit(color_value, binary):
     temp = ''.join(temp)
     color_value = int(temp, 2)
     return color_value
+
+
+def create_new_color_value(color_value, binary):
+    """Changing red, blue and green value of a pixel.
+
+    Args:
+        color_value: red, blue or green value.
+        binary: sequence of string 0 and 1.
+
+    Returns:
+        New color value for red, blue or green.
+        New binary after deleting its first character.
+    """
+    color_value = change_least_significant_bit(color_value, binary)
+    binary = binary[1:]
+    return color_value, binary
 
 
 def encode(img, text):
@@ -180,21 +196,18 @@ def encode(img, text):
         index -= 1 #keep track the pixel position
 
         if text_length_as_binary:
-            red = change_least_significant_bit(red, text_length_as_binary)
-            text_length_as_binary = text_length_as_binary[1:]
+            red, text_length_as_binary = create_new_color_value(red, text_length_as_binary)
 
             if not text_length_as_binary:
                 new_image_data.append((red, blue, green))
                 break
 
-            blue = change_least_significant_bit(blue, text_length_as_binary)
-            text_length_as_binary = text_length_as_binary[1:]
+            blue, text_length_as_binary = create_new_color_value(blue, text_length_as_binary)
             if not text_length_as_binary:
                 new_image_data.append((red, blue, green))
                 break
 
-            green = change_least_significant_bit(green, text_length_as_binary)
-            text_length_as_binary = text_length_as_binary[1:]
+            green, text_length_as_binary = create_new_color_value(green, text_length_as_binary)
             if not text_length_as_binary:
                 new_image_data.append((red, blue, green))
                 break
@@ -211,21 +224,17 @@ def encode(img, text):
         index -= 1 #keep track the pixel position
 
         if text_in_binary:
-            red = change_least_significant_bit(red, text_in_binary)
-            text_in_binary = text_in_binary[1:]
-
+            red, text_in_binary = create_new_color_value(red, text_in_binary)
             if not text_in_binary:
                 new_image_data.append((red, blue, green))
                 break
 
-            blue = change_least_significant_bit(blue, text_in_binary)
-            text_in_binary = text_in_binary[1:]
+            blue, text_in_binary = create_new_color_value(blue, text_in_binary)
             if not text_in_binary:
                 new_image_data.append((red, blue, green))
                 break
 
-            green = change_least_significant_bit(green, text_in_binary)
-            text_in_binary = text_in_binary[1:]
+            green, text_in_binary = create_new_color_value(green, text_in_binary)
             if not text_length:
                 new_image_data.append((red, blue, green))
                 break

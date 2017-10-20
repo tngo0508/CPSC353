@@ -14,7 +14,9 @@ Make sure you change user permission to execute the program
 ```
 $ chmod u+x project.py
 ```
-### To encode:
+### To encode: <br /> 
+Write the secret text/message on file.txt. Then, execute
+following commands
 ```
 $ ./project.py -e <image> -r <file>.txt -o <output>.png
 ```
