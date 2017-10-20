@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
+"""CPSC353 project STEGENOGRAPHY/TEXT IN IMAGE."""
 import sys
-import os
 import argparse
 from PIL import Image
 
@@ -8,16 +8,16 @@ def text_to_binary(text):
     """Convert a string text into sequence of binary by using ASCII key number.
     First, convert each character in string into ASCII key number. Then, format
     the integer ASCII key number into 8-bit representing for each character.
-    Finally, join them together to form a sequence of binary
+    Finally, join them together to form a sequence of binary.
 
     Args:
-        text: a string of character
+        text: a string of character.
 
     Returns:
-        A string of number 1 and 0 as sequence of binary
+        A string of number 1 and 0 as sequence of binary.
     """
 
-    return ''.join(format(ord(x), '08b') for x in text)
+    return ''.join(format(ord(horizontal), '08b') for horizontal in text)
 
 
 def binary_to_text(binary):
@@ -26,109 +26,110 @@ def binary_to_text(binary):
     and ASCII key character respectively.
 
     Args:
-        binary: a string of number 1 and 0 as sequence of binary
+        binary: a string of number 1 and 0 as sequence of binary.
 
     Returns:
-        A string of character in human-readable mode
+        A string of character in human-readable mode.
     """
 
-    n = int(binary,2)
-    text = n.to_bytes((n.bit_length() + 7) // 8, 'big').decode()
+    binary_as_number = int(binary, 2)
+    text = binary_as_number.to_bytes((binary_as_number.bit_length() + 7) // 8, 'big').decode()
     return text
 
 
-def decode(im):
-    """Decode the hidden secret text inside an image
+def decode(img):
+    """Decode the hidden secret text inside an image.
 
     Retrieves the textLength using the bottom right 11 pixels. Then, use the
     textLength to extract the text from image after those 11 pixels.
 
     Args:
-        im: an image stores the textLength and secret message/text
+        img: an image stores the textLength and secret message/text.
 
-    Returns:    
-        A string contains the content of secret text
+    Returns:
+        A string contains the content of secret text.
     """
 
-    """Get horizontal and vertical size of the image
-    x is horizontal, y is vertical"""
-    x,y = im.size
+    horizontal, vertical = img.size #Get horizontal and vertical size of the image
 
-    """Used to reset x and y"""
-    w,l = im.size
+    width = horizontal #Used to reset horizontal value
 
-    """Use the first 11 pixels on the bottom right to read text length(number of bits)"""
-    """Store text length in binary"""
+    """Use the first 11 pixels on the bottom right to read text length(number of bits)
+    Store text length in binary.
+    """
     num_of_bit = []
-    y -=1
-    for i in range (11):
-        """Decrement x to read backward from bottome right to bottom left of image"""
-        x -= 1
+    vertical -= 1
+    for _ in range(11):
+        horizontal -= 1
 
-        """Each pixel has an RGB value in which has 3 sub-value r,b,g"""
-        r, b, g = im.getpixel((x, y))
+        red, blue, green = img.getpixel((horizontal, vertical))
 
-        """Each RGB has three sets of 8-bit, retrieve the least significant 
-        bit(LSB) in each set and add them in numOfBit to establish a sequence of binary"""
-        temp = '{0:08b}'.format(r)
+        """Each RGB has three sets of 8-bit, retrieve the least significant
+        bit(LSB) in each set and add them in numOfBit to establish a sequence of binar
+        """
+        temp = '{0:08b}'.format(red)
         num_of_bit.append(temp[-1])
 
-        temp = '{0:08b}'.format(b)
+        temp = '{0:08b}'.format(blue)
         num_of_bit.append(temp[-1])
 
-        temp = '{0:08b}'.format(g)
+        temp = '{0:08b}'.format(green)
         num_of_bit.append(temp[-1])
 
-    """11 pixels store 33 LSB, but only 32 LSB are used to read the text length"""
+    """11 pixels store 33 LSB, but only 32 LSB are used to read the text length.
+    """
     num_of_bit = num_of_bit[:-1]
 
-    """Convert binary to text length in number of LSB numOfBit is just a array 
-    containing elements that represent for a binary sequence, it is NOT a real binary"""
-    text_length = int(''.join(num_of_bit),2)
+    """Convert binary to text length in number of LSB numOfBit is just a array
+    containing elements that represent for a binary sequence, it is NOT a real
+    binary.
+    """
+    text_length = int(''.join(num_of_bit), 2)
     print('The text length in bit:', text_length)
-    print('The text length in binary:', bin(int(''.join(num_of_bit),2))[2:].zfill(32))
+    print('The text length in binary:', bin(int(''.join(num_of_bit), 2))[2:].zfill(32))
 
     """Once knew the length of secret text, use it to find the sequence binary of the secret text.
-    After that, use the function binary_to_text to decode it into message"""
+    After that, use the function binary_to_text to decode it into message.
+    """
     text = []
-    while (len(text) < text_length):
-        x -= 1
-        r, b, g = im.getpixel((x, y))
+    while len(text) < text_length:
+        horizontal -= 1
+        red, blue, green = img.getpixel((horizontal, vertical))
 
-        temp = '{0:08b}'.format(r)
+        temp = '{0:08b}'.format(red)
         text.append(temp[-1])
-        if (len(text) == text_length):
+        if len(text) == text_length:
             break
 
-        temp = '{0:08b}'.format(b)
+        temp = '{0:08b}'.format(blue)
         text.append(temp[-1])
-        if (len(text) == text_length):
+        if len(text) == text_length:
             break
 
-        temp = '{0:08b}'.format(g)
+        temp = '{0:08b}'.format(green)
         text.append(temp[-1])
-        if (len(text) == text_length):
+        if len(text) == text_length:
             break
 
         """If horizontal value becomes 0, program has reached the end of bottom
         left. Need to reset the values of horizontal and vertical to read the
-        line above the current line and from right to left"""
-        if (x == 0):
-            y = y - 1
-            x = w
+        line above the current line and from right to left.
+        """
+        if horizontal == 0:
+            vertical = vertical - 1
+            horizontal = width
 
-    """Convert sequence of LSB into a real binary"""
-    msg = bin(int(''.join(text), 2))
+    msg = bin(int(''.join(text), 2)) #Convert sequence of LSB into a real binary
     message = binary_to_text(msg)
     return message
 
 
-def change_LSB(RGB_elem, binary):
+def change_least_significant_bit(color_value, binary):
     """Change the least significant bit in red, blue, green value or RGB value
     of a pixel
 
     Args:
-        RGB_elem: red, green, or blue value of a pixel
+        color_value: red, green, or blue value of a pixel
         binary: sequence of number 0 and 1 representing for textLength or secret
         text
 
@@ -136,135 +137,157 @@ def change_LSB(RGB_elem, binary):
         New RGB value after changing the least significant bit
     """
 
-    temp = list('{0:08b}'.format(RGB_elem))
+    temp = list('{0:08b}'.format(color_value))
     binary = list(binary)
     temp[-1] = binary[0]
-    temp  = ''.join(temp)
-    RGB_elem = int(temp,2) 
-    return RGB_elem
+    temp = ''.join(temp)
+    color_value = int(temp, 2)
+    return color_value
 
 
-def encode(im, text):
-    """Encode or hide the data (e.g. secret text) inside the least significant
-    bit of each RGB value inside an image
+def encode(img, text):
+    """Encode or hide the data (e.green. secret text) inside the least significant
+    bit of each RGB value inside an image.
 
     Args:
-        im: image to be embedded with data
-        text: data or secret message
+        img: image to be embedded with data.
+        text: data or secret message.
 
     Returns:
-        The new image with data embedded inside it
+        The new image with data embedded inside it.
     """
 
-    image_data = list(im.getdata())
+    image_data = list(img.getdata())
     new_image_data = []
-    text_in_binary = text_to_binary(text) 
+    text_in_binary = text_to_binary(text)
     text_length = len(text_in_binary)
 
-    """Hide textLength as binary inside 11 pixels of the image"""
+    """Hide textLength as binary inside 11 pixels of the image.
+    """
     text_length_as_binary = format(text_length, '032b')
 
-    x,y = im.size
-    w,l = im.size #used to reset x and y
-    index = 0 
-    y -=1
-    
+    horizontal, vertical = img.size
+    width = horizontal #used to reset horizontal value
+    index = 0
+    vertical -= 1
+
     """Extract RGB value from each pixel and start changing the least
-    significant bit in each 8-bit red, green and blue value"""
+    significant bit in each 8-bit red, green and blue value.
+    """
     while text_length_as_binary:
-        x -= 1
-        r, b, g = im.getpixel((x, y))
-        index -= 1 #keep track the pixel position 
+        horizontal -= 1
+        red, blue, green = img.getpixel((horizontal, vertical))
+        index -= 1 #keep track the pixel position
 
         if text_length_as_binary:
-            r = change_LSB(r, text_length_as_binary)
+            red = change_least_significant_bit(red, text_length_as_binary)
             text_length_as_binary = text_length_as_binary[1:]
+
             if not text_length_as_binary:
-                new_image_data.append((r, b, g))
+                new_image_data.append((red, blue, green))
                 break
 
-            b = change_LSB(b, text_length_as_binary)
+            blue = change_least_significant_bit(blue, text_length_as_binary)
             text_length_as_binary = text_length_as_binary[1:]
             if not text_length_as_binary:
-                new_image_data.append((r, b, g))
+                new_image_data.append((red, blue, green))
                 break
 
-            g = change_LSB(g, text_length_as_binary)
+            green = change_least_significant_bit(green, text_length_as_binary)
             text_length_as_binary = text_length_as_binary[1:]
             if not text_length_as_binary:
-                new_image_data.append((r, b, g))
+                new_image_data.append((red, blue, green))
                 break
 
-        new_image_data.append((r, b, g)) 
+        new_image_data.append((red, blue, green))
 
     """Hide secret text as binary after the pixel 11 from bottom right to top
-    left"""
+    left.
+    """
     while text_in_binary:
-        x -= 1
+        horizontal -= 1
 
-        r, b, g = im.getpixel((x, y))
+        red, blue, green = img.getpixel((horizontal, vertical))
         index -= 1 #keep track the pixel position
 
         if text_in_binary:
-            r = change_LSB(r, text_in_binary)
+            red = change_least_significant_bit(red, text_in_binary)
             text_in_binary = text_in_binary[1:]
 
             if not text_in_binary:
-                new_image_data.append((r, b, g))
+                new_image_data.append((red, blue, green))
                 break
 
-            b = change_LSB(b, text_in_binary)
+            blue = change_least_significant_bit(blue, text_in_binary)
             text_in_binary = text_in_binary[1:]
             if not text_in_binary:
-                new_image_data.append((r, b, g))
+                new_image_data.append((red, blue, green))
                 break
 
-            g = change_LSB(g, text_in_binary)
+            green = change_least_significant_bit(green, text_in_binary)
             text_in_binary = text_in_binary[1:]
             if not text_length:
-                new_image_data.append((r, b, g))
+                new_image_data.append((red, blue, green))
                 break
 
-        new_image_data.append((r, b, g))
+        new_image_data.append((red, blue, green))
 
-        if x == 0:
-            y = y - 1
-            x = w
+        if horizontal == 0:
+            vertical = vertical - 1
+            horizontal = width
 
-    """Because we try to hide data from bottom right to top left, reverse the list in order to decode in correct order"""
+    """Because we try to hide data from bottom right to top left,
+    reverse the list in order to decode in correct order.
+    """
     new_image_data = new_image_data[::-1]
 
-    """copy the rest pixels of the image into newImageData"""
+    """Copy the rest pixels of the image into newImageData.
+    """
     new_image_data = image_data[:index] + new_image_data
 
     return new_image_data
 
 
 def main(image, output, read, is_encode):
-    im = Image.open(image)
+    """Running the stegenography program by calling encode() or decode()
+    function which is depended on user's command line.
+
+    Args:
+        image: location of the image.
+        output: new image embedded with secret text.
+        read: human-readable file.
+        is_encode: flag for calling encode() or decode().
+
+    Returns:
+        None.
+    """
+    img = Image.open(image)
     if is_encode:
         with open(read) as content_file:
             content = content_file.read()
-        new_image = encode(im, content)
-        im.putdata(new_image)
-        im.save(output, 'PNG')
+        new_image = encode(img, content)
+        img.putdata(new_image)
+        img.save(output, 'PNG')
     else:
-        print(decode(im))
+        print(decode(img))
+    sys.exit(0)
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description = 'Stegenography Project CPSC353')
+    PARSER = argparse.ArgumentParser(description='Stegenography Project CPSC353')
 
-    group = parser.add_mutually_exclusive_group(required = True)
-    group.add_argument('-d','--decode', help = 'decode on an image mode RGB', action = 'store_true', dest = 'decode', default = False)
-    group.add_argument('-e', '--encode', help = 'encode on an image mode RGB', action = 'store_true', dest = 'encode', default = False)
-    parser.add_argument('image', help = 'location of the image')
-    parser.add_argument('-r', '--read', action='store',help = 'human-readable file')
-    parser.add_argument('-o', '--output', help = 'Name of output file', dest = 'output',default = None)
-    args = parser.parse_args()
+    GROUP = PARSER.add_mutually_exclusive_group(required=True)
+    GROUP.add_argument('-d', '--decode', help='decode on an image mode RGB', \
+            action='store_true', dest='decode', default=False)
+    GROUP.add_argument('-e', '--encode', help='encode on an image mode RGB', \
+            action='store_true', dest='encode', default=False)
+    PARSER.add_argument('image', help='location of the image')
+    PARSER.add_argument('-red', '--read', action='store', help='human-readable file')
+    PARSER.add_argument('-o', '--output', help='Name of output file', dest='output', default=None)
+    ARGS = PARSER.parse_args()
 
-    if args.encode and not args.read and not args.output:
+    if ARGS.encode and not ARGS.read and not ARGS.output:
         print('secret text is required')
         sys.exit(0)
 
-    main(args.image, args.output, args.read, args.encode)
+    main(ARGS.image, ARGS.output, ARGS.read, ARGS.encode)
